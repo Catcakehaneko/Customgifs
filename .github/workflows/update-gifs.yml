@@ -1,0 +1,21 @@
+name: Update GIF list
+
+on:
+  push:
+    paths:
+      - 'gifs/**'
+  workflow_dispatch:
+
+jobs:
+  update-gifs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Generate gifs.json
+        run: |
+          cd gifs
+          ls *.gif > ../gifs.txt || true
+          # convert to JSON array
+          jq -R -s -c 'split("\n")[:-1]' ../gifs.txt > ../gifs.json
