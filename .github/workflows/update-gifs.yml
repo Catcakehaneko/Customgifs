@@ -16,6 +16,6 @@ jobs:
       - name: Generate gifs.json
         run: |
           cd gifs
-          ls *.gif > ../gifs.txt || true
+          ls *.gif *.png *.jpg *.jpeg *.webp 2>/dev/null > ../gifs.txt || true
           # convert to JSON array
           jq -R -s -c 'split("\n")[:-1]' ../gifs.txt > ../gifs.json
