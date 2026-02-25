@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My GIF Library</title>
+<style>
+body { font-family: system-ui; background:#111; color:#eee; padding:20px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+.card { background:#1b1b1b; border-radius:10px; padding:10px; }
+img { width:100%; border-radius:6px; }
+button { margin-top:8px; width:100%; padding:8px; border:none; border-radius:6px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<h1>My GIF Library</h1>
+<p>Upload GIFs to the <code>/gifs</code> folder in GitHub. They appear here automatically.</p>
+
+<div class="grid" id="grid"></div>
+
+<script>
+fetch('gifs.json')
+  .then(r => r.json())
+  .then(files => {
+    const grid = document.getElementById('grid');
+    files.forEach(name => {
+      const url = `gifs/${name}`;
+      grid.insertAdjacentHTML('beforeend', `
+        <div class="card">
+          <img src="${url}">
+          <button onclick="navigator.clipboard.writeText(location.origin+'/'+url)">
+            Copy link
+          </button>
+        </div>
+      `);
+    });
+  });
+</script>
+
+</body>
+</html>
