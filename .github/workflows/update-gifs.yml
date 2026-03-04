@@ -3,8 +3,8 @@ name: Update GIF list
 on:
   push:
     paths:
-      - '**'          # Trigger on any change in repo
-  workflow_dispatch:   # Allow manual trigger too
+      - '**'          # triggers on any change in the repo
+  workflow_dispatch:   # manual trigger allowed
 
 jobs:
   update-gifs:
@@ -13,11 +13,21 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Generate gifs.json
+      - name: Rebuild gifs.json
         run: |
-          # Only list files inside gifs/ folder
-          cd gifs || exit 0
-          # List all files in gifs/, including subfolders
-          find . -type f -printf "%P\n" | sort > ../gifs.txt
-          # Convert to JSON array
-          jq -R -s -c 'split("\n")[:-1]' ../gifs.txt > ../gifs.json
+          # Delete existing gifs.json if it exists
+          if [ -f gifs.json ]; then
+            rm gifs.json
+          fi
+
+          # Exit safely if gifs folder doesn't exist
+          if [ ! -d gifs ]; then
+            echo "[]" > gifs.json
+            exit 0
+          fi
+
+          # List all files in gifs folder
+          find gifs -type f -printf "%f\n" | sort > gifs.txt
+
+          # Convert to JSON array and create new gifs.json
+          jq -R -s -c 'split("\n")[:-1]' gifs.txt > gifs.json
