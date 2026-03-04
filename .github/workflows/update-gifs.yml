@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # allow pushing changes
+  contents: write
 
 jobs:
   update-gifs:
@@ -21,25 +21,59 @@ jobs:
       - name: Install FFmpeg
         run: sudo apt update && sudo apt install -y ffmpeg
 
-      - name: Prepare conversion folders
+      - name: Convert media to GIFs safely
+        shell: bash
         run: |
+          set -e
+
           if [ ! -d gifs ]; then
-            echo "gifs folder not found, skipping conversion."
+            echo "gifs folder not found, creating empty folder."
             mkdir gifs
           fi
+
           mkdir -p gifs_converted
 
-      - name: Convert media to GIFs safely
-        run: |
-          set -e  # stop workflow if any command fails
           for f in gifs/*; do
-            [ -f "$f" ] || continue  # skip if not a file
+            [ -f "$f" ] || continue
             filename=$(basename "$f")
             name="${filename%.*}"
             ext="${filename##*.}"
-            
-            # Limit video length to 5 seconds, resize to 320px width, fps 15
-            if [[ "$ext" =~ ^(mp4|webm)$ ]]; then
-              ffmpeg -y -t 5 -i "$f" -vf "fps=15,scale=320:-1:flags=lanczos" "gifs_converted/${name}.gif"
-            # Convert images to GIF
-            elif [[ "$ext" =~ ^(png|jpg|jpeg|
+            ext=${ext,,}  # lowercase
+
+            case "$ext" in
+              mp4|webm)
+                echo "Converting video $f to GIF..."
+                ffmpeg -y -t 5 -i "$f" -vf "fps=15,scale=320:-1:flags=lanczos" "gifs_converted/${name}.gif"
+                ;;
+              png|jpg|jpeg|gif)
+                echo "Converting image $f to GIF..."
+                ffmpeg -y -i "$f" "gifs_converted/${name}.gif"
+                ;;
+              *)
+                echo "Skipping unsupported file: $f"
+                ;;
+            esac
+          done
+
+          # Only overwrite gifs folder if all conversions succeeded
+          rm -rf gifs
+          mv gifs_converted gifs
+
+      - name: Rebuild gifs.json
+        shell: bash
+        run: |
+          rm -f gifs.json
+
+          if [ ! -d gifs ]; then
+            echo "[]" > gifs.json
+          else
+            find gifs -type f -printf "%f\n" | sort > gifs.txt
+            jq -R -s -c 'split("\n")[:-1]' gifs.txt > gifs.json
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add gifs gifs.json
+          git diff --cached --quiet || git commit -m "Convert media to GIFs & update gifs.json"
+          git push
