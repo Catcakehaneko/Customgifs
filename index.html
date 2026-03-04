@@ -61,7 +61,7 @@ p {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .card:hover {
@@ -79,9 +79,11 @@ p {
   background: #000;
 }
 
-.preview img {
+.preview img,
+.preview video {
   width: 100%;
   display: block;
+  border-radius: 12px;
 }
 
 button {
@@ -91,7 +93,7 @@ button {
   cursor: pointer;
   background: linear-gradient(180deg, #2a244d, #211b3f);
   color: var(--text);
-  transition: all 0.15s;
+  transition: all 0.15s ease;
 }
 
 button:hover {
@@ -109,7 +111,7 @@ button.copied {
 
 <header>
   <h1>My GIF Gallery</h1>
-  <p>One click. Instant Discord-ready links.</p>
+  <p>GIFs & MP4s · One click · Discord-ready</p>
 </header>
 
 <main class="gallery" id="gallery"></main>
@@ -120,20 +122,34 @@ fetch('gifs.json')
   .then(files => {
     const gallery = document.getElementById('gallery');
 
-    // Extract repo name (Customgifs)
     const repo = location.pathname.split('/')[1];
     const base = `${location.origin}/${repo}`;
 
     files.forEach(file => {
       const relative = `gifs/${file}`;
       const fullUrl = `${base}/${relative}`;
+      const ext = file.split('.').pop().toLowerCase();
 
       const card = document.createElement('div');
       card.className = 'card';
+
+      let media;
+      if (ext === 'mp4') {
+        media = `
+          <video
+            src="${relative}"
+            autoplay
+            loop
+            muted
+            playsinline
+          ></video>
+        `;
+      } else {
+        media = `<img src="${relative}" alt="${file}">`;
+      }
+
       card.innerHTML = `
-        <div class="preview">
-          <img src="${relative}">
-        </div>
+        <div class="preview">${media}</div>
         <button>Copy link</button>
       `;
 
