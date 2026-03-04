@@ -17,9 +17,7 @@
   --accent-soft: rgba(155,140,255,0.35);
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -40,7 +38,6 @@ header {
 h1 {
   font-size: 2.2rem;
   margin: 0 0 8px;
-  letter-spacing: 0.3px;
 }
 
 p {
@@ -136,9 +133,9 @@ button.copied {
 button.copied:hover {
   background: linear-gradient(180deg, #9b8cff, #7b6cff);
 }
-
 </style>
 </head>
+
 <body>
 
 <header>
@@ -155,13 +152,15 @@ fetch('gifs.json')
     const gallery = document.getElementById('gallery');
 
     files.forEach(file => {
-      const url = `gifs/${file}`;
+      const relativePath = `gifs/${file}`;
+      const fullUrl = new URL(relativePath, document.baseURI).href;
+
       const card = document.createElement('div');
       card.className = 'card';
 
       card.innerHTML = `
         <div class="preview">
-          <img src="${url}" alt="${file}">
+          <img src="${relativePath}" alt="${file}">
         </div>
         <div class="actions">
           <button>Copy link</button>
@@ -170,7 +169,8 @@ fetch('gifs.json')
 
       const btn = card.querySelector('button');
       btn.addEventListener('click', () => {
-        navigator.clipboard.writeText(location.origin + '/' + url);
+        navigator.clipboard.writeText(fullUrl);
+
         btn.textContent = 'Copied!';
         btn.classList.add('copied');
 
