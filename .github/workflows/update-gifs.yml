@@ -1,4 +1,4 @@
-name: Update GIF list
+name: Convert media to GIFs & update gallery
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # allow pushing changes
+  contents: write  # allow pushing changes
 
 jobs:
   update-gifs:
@@ -16,22 +16,30 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          persist-credentials: true  # allows pushing with GITHUB_TOKEN
+          persist-credentials: true
 
-      - name: Rebuild gifs.json
+      - name: Install FFmpeg
+        run: sudo apt update && sudo apt install -y ffmpeg
+
+      - name: Prepare conversion folders
         run: |
-          rm -f gifs.json
-
           if [ ! -d gifs ]; then
-            echo "[]" > gifs.json
-          else
-            find gifs -type f -printf "%f\n" | sort > gifs.txt
-            jq -R -s -c 'split("\n")[:-1]' gifs.txt > gifs.json
+            echo "gifs folder not found, skipping conversion."
+            mkdir gifs
           fi
+          mkdir -p gifs_converted
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git add gifs.json
-          git diff --cached --quiet || git commit -m "Update gifs.json"
-          git push
+      - name: Convert media to GIFs safely
+        run: |
+          set -e  # stop workflow if any command fails
+          for f in gifs/*; do
+            [ -f "$f" ] || continue  # skip if not a file
+            filename=$(basename "$f")
+            name="${filename%.*}"
+            ext="${filename##*.}"
+            
+            # Limit video length to 5 seconds, resize to 320px width, fps 15
+            if [[ "$ext" =~ ^(mp4|webm)$ ]]; then
+              ffmpeg -y -t 5 -i "$f" -vf "fps=15,scale=320:-1:flags=lanczos" "gifs_converted/${name}.gif"
+            # Convert images to GIF
+            elif [[ "$ext" =~ ^(png|jpg|jpeg|
