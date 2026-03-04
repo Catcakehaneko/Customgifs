@@ -3,8 +3,8 @@ name: Update GIF list
 on:
   push:
     paths:
-      - '**'          # triggers on any change in the repo
-  workflow_dispatch:   # manual trigger allowed
+      - '**'
+  workflow_dispatch:
 
 jobs:
   update-gifs:
@@ -15,19 +15,24 @@ jobs:
 
       - name: Rebuild gifs.json
         run: |
-          # Delete existing gifs.json if it exists
-          if [ -f gifs.json ]; then
-            rm gifs.json
-          fi
+          # Delete existing gifs.json
+          rm -f gifs.json
 
-          # Exit safely if gifs folder doesn't exist
+          # If gifs folder doesn't exist, create empty array
           if [ ! -d gifs ]; then
             echo "[]" > gifs.json
-            exit 0
+          else
+            # List all files in gifs folder
+            find gifs -type f -printf "%f\n" | sort > gifs.txt
+            # Convert to JSON array
+            jq -R -s -c 'split("\n")[:-1]' gifs.txt > gifs.json
           fi
 
-          # List all files in gifs folder
-          find gifs -type f -printf "%f\n" | sort > gifs.txt
+          # Configure Git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Convert to JSON array and create new gifs.json
-          jq -R -s -c 'split("\n")[:-1]' gifs.txt > gifs.json
+          # Commit and push the new gifs.json if there are changes
+          git add gifs.json
+          git diff --cached --quiet || git commit -m "Update gifs.json"
+          git push
