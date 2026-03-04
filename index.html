@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GIF Gallery</title>
-
+<title>GIF & Video Gallery</title>
 <style>
 :root {
   --bg: #0b0a10;
@@ -61,15 +60,17 @@ p {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .card:hover {
+  background: var(--card-hover);
   transform: translateY(-2px);
   box-shadow: 0 10px 30px rgba(120,90,255,0.2);
 }
 
 .card:active {
+  background: var(--card-active);
   transform: scale(0.97);
 }
 
@@ -110,8 +111,8 @@ button.copied {
 <body>
 
 <header>
-  <h1>My GIF Gallery</h1>
-  <p>GIFs & MP4s · One click · Discord-ready</p>
+  <h1>My GIF & Video Gallery</h1>
+  <p>Images, GIFs & Videos · One click copy · Discord-ready</p>
 </header>
 
 <main class="gallery" id="gallery"></main>
@@ -122,30 +123,23 @@ fetch('gifs.json')
   .then(files => {
     const gallery = document.getElementById('gallery');
 
-    const repo = location.pathname.split('/')[1];
+    // Determine the repo base path for GitHub Pages project sites
+    const pathParts = location.pathname.split('/').filter(Boolean);
+    const repo = pathParts[0] || '';
     const base = `${location.origin}/${repo}`;
 
     files.forEach(file => {
-      const relative = `gifs/${file}`;
-      const fullUrl = `${base}/${relative}`;
       const ext = file.split('.').pop().toLowerCase();
+      const fullUrl = `${base}/gifs/${file}`;
 
       const card = document.createElement('div');
       card.className = 'card';
 
       let media;
-      if (ext === 'mp4') {
-        media = `
-          <video
-            src="${relative}"
-            autoplay
-            loop
-            muted
-            playsinline
-          ></video>
-        `;
+      if (['mp4','webm'].includes(ext)) {
+        media = `<video src="${fullUrl}" autoplay loop muted playsinline></video>`;
       } else {
-        media = `<img src="${relative}" alt="${file}">`;
+        media = `<img src="${fullUrl}" alt="${file}">`;
       }
 
       card.innerHTML = `
@@ -166,7 +160,8 @@ fetch('gifs.json')
 
       gallery.appendChild(card);
     });
-  });
+  })
+  .catch(err => console.error('Failed to load gifs.json:', err));
 </script>
 
 </body>
