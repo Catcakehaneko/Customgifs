@@ -2,37 +2,172 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>My GIF Library</title>
+<title>GIF Gallery</title>
+
 <style>
-body { font-family: system-ui; background:#111; color:#eee; padding:20px; }
-.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
-.card { background:#1b1b1b; border-radius:10px; padding:10px; }
-img { width:100%; border-radius:6px; }
-button { margin-top:8px; width:100%; padding:8px; border:none; border-radius:6px; cursor:pointer; }
+:root {
+  --bg: #0e0e11;
+  --card: #18181d;
+  --card-hover: #141418;
+  --card-active: #0f0f13;
+  --border: #2a2a33;
+  --text: #e6e6eb;
+  --muted: #a0a0b0;
+  --accent: #6c8cff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  max-width: 1200px;
+  margin: 0 auto 28px;
+}
+
+h1 {
+  font-size: 2rem;
+  margin: 0 0 6px;
+}
+
+p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.gallery {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.card:hover {
+  background: var(--card-hover);
+}
+
+.card:active {
+  background: var(--card-active);
+  transform: scale(0.98);
+}
+
+.preview {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+}
+
+.preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: #242430;
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: background 0.15s ease;
+}
+
+button:hover {
+  background: #2e2e3d;
+}
+
+button:active {
+  background: #1c1c25;
+}
+
+button.copied {
+  background: var(--accent);
+  color: #fff;
+}
+
+footer {
+  margin-top: 40px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
 </style>
 </head>
 <body>
 
-<h1>My GIF Library</h1>
-<p>Upload GIFs to the <code>/gifs</code> folder in GitHub. They appear here automatically.</p>
+<header>
+  <h1>My GIF Gallery</h1>
+  <p>Click a button to copy a direct link for Discord.</p>
+</header>
 
-<div class="grid" id="grid"></div>
+<main class="gallery" id="gallery"></main>
+
+<footer>
+  Hosted on GitHub Pages · Static · Free
+</footer>
 
 <script>
 fetch('gifs.json')
-  .then(r => r.json())
+  .then(res => res.json())
   .then(files => {
-    const grid = document.getElementById('grid');
-    files.forEach(name => {
-      const url = `gifs/${name}`;
-      grid.insertAdjacentHTML('beforeend', `
-        <div class="card">
-          <img src="${url}">
-          <button onclick="navigator.clipboard.writeText(location.origin+'/'+url)">
-            Copy link
-          </button>
+    const gallery = document.getElementById('gallery');
+
+    files.forEach(file => {
+      const url = `gifs/${file}`;
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      card.innerHTML = `
+        <div class="preview">
+          <img src="${url}" alt="${file}">
         </div>
-      `);
+        <div class="actions">
+          <button>Copy link</button>
+        </div>
+      `;
+
+      const btn = card.querySelector('button');
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(location.origin + '/' + url);
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+
+        setTimeout(() => {
+          btn.textContent = 'Copy link';
+          btn.classList.remove('copied');
+        }, 900);
+      });
+
+      gallery.appendChild(card);
     });
   });
 </script>
