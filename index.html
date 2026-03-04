@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GIF & Video Gallery</title>
+<title>GIF Gallery</title>
 <style>
 :root {
   --bg: #0b0a10;
@@ -80,8 +80,7 @@ p {
   background: #000;
 }
 
-.preview img,
-.preview video {
+.preview img {
   width: 100%;
   display: block;
   border-radius: 12px;
@@ -111,8 +110,8 @@ button.copied {
 <body>
 
 <header>
-  <h1>My GIF & Video Gallery</h1>
-  <p>Images, GIFs & Videos · One click copy · Discord-ready</p>
+  <h1>My GIF Gallery</h1>
+  <p>All files are GIFs · One click copy · Discord-ready</p>
 </header>
 
 <main class="gallery" id="gallery"></main>
@@ -122,28 +121,18 @@ fetch('gifs.json')
   .then(r => r.json())
   .then(files => {
     const gallery = document.getElementById('gallery');
-
-    // Determine the repo base path for GitHub Pages project sites
-    const pathParts = location.pathname.split('/').filter(Boolean);
-    const repo = pathParts[0] || '';
-    const base = `${location.origin}/${repo}`;
+    const base = 'https://catcakehaneko.github.io/Customgifs/gifs/';
 
     files.forEach(file => {
-      const ext = file.split('.').pop().toLowerCase();
-      const fullUrl = `${base}/gifs/${file}`;
+      const fullUrl = base + encodeURIComponent(file); // exact filename from gifs.json
 
       const card = document.createElement('div');
       card.className = 'card';
 
-      let media;
-      if (['mp4','webm'].includes(ext)) {
-        media = `<video src="${fullUrl}" autoplay loop muted playsinline></video>`;
-      } else {
-        media = `<img src="${fullUrl}" alt="${file}">`;
-      }
-
       card.innerHTML = `
-        <div class="preview">${media}</div>
+        <div class="preview">
+          <img src="${fullUrl}" alt="${file}">
+        </div>
         <button>Copy link</button>
       `;
 
