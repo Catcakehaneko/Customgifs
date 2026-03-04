@@ -1,13 +1,13 @@
-name: Update media list
+name: Update GIF list
 
 on:
   push:
     paths:
-      - 'gifs/**'
-  workflow_dispatch:
+      - '**'          # Trigger on any change in repo
+  workflow_dispatch:   # Allow manual trigger too
 
 jobs:
-  update-media:
+  update-gifs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -15,8 +15,9 @@ jobs:
 
       - name: Generate gifs.json
         run: |
-          cd gifs
-          # Include images + videos: GIFs, PNG, JPG, JPEG, WEBP, MP4, WEBM
-          ls *.gif *.png *.jpg *.jpeg *.webp *.mp4 *.webm 2>/dev/null | sort > ../gifs.txt || true
-          # Convert list to JSON array
+          # Only list files inside gifs/ folder
+          cd gifs || exit 0
+          # List all files in gifs/, including subfolders
+          find . -type f -printf "%P\n" | sort > ../gifs.txt
+          # Convert to JSON array
           jq -R -s -c 'split("\n")[:-1]' ../gifs.txt > ../gifs.json
