@@ -6,33 +6,32 @@ on:
       - '**'
   workflow_dispatch:
 
+permissions:
+  contents: write   # allow pushing changes
+
 jobs:
   update-gifs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          persist-credentials: true  # allows pushing with GITHUB_TOKEN
 
       - name: Rebuild gifs.json
         run: |
-          # Delete existing gifs.json
           rm -f gifs.json
 
-          # If gifs folder doesn't exist, create empty array
           if [ ! -d gifs ]; then
             echo "[]" > gifs.json
           else
-            # List all files in gifs folder
             find gifs -type f -printf "%f\n" | sort > gifs.txt
-            # Convert to JSON array
             jq -R -s -c 'split("\n")[:-1]' gifs.txt > gifs.json
           fi
 
-          # Configure Git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Commit and push the new gifs.json if there are changes
           git add gifs.json
           git diff --cached --quiet || git commit -m "Update gifs.json"
           git push
